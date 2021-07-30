@@ -1,0 +1,28 @@
+{
+  "name": "serverless-flow-framework",
+  "version": "0.0.1",
+  "description": "Serverless data flow framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rimraf dist && tsc -b",
+    "clean": "rimraf dist node_modules package-lock.json",
+    "lint": "eslist src --ext .ts,.js",
+    "start": "node --unhandled-rejections=strict dist/main.js",
+    "watch": "rimraf dist && tsc -b tsconfig.json -w"
+  },
+  "author": "Avner Braverman",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "aws-sdk": "^2.922.0",
+    "jszip": "^3.6.0",
+    "rimraf": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^16.3.3",
+    "@types/rimraf": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.24.0",
+    "@typescript-eslint/parser": "^4.24.0",
+    "ts-node": "^10.1.0",
+    "typescript": "^4.3.5"
+  }
+}

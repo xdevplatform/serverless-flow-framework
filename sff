@@ -1,0 +1,1 @@
+node --unhandled-rejections=strict . $*
