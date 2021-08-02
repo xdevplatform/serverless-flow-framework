@@ -9,7 +9,7 @@ module.exports.main = async function main(event, state) {
 
   const tweets = state.prev && state.prev.lastTweetId
     ? await twitter.poll(feed.query, state.prev.lastTweetId, feed.fields)
-    : await twitter.recent(feed.query, 100, feed.fields)
+    : await twitter.recent(feed.query, 50, feed.fields)
 
   if (0 === tweets.length) {
     throw new Error('No Tweets found. Throwing exception to stop the flow')

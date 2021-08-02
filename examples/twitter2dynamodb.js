@@ -38,8 +38,8 @@ go = sff
   .then(
     function twitterQuery() {
       return {
-        name: 'sff',
-        query: 'serverless flow framework',
+        name: 'serverless',
+        query: 'serverless',
         fields: ['id', 'text', 'created_at'],
       }
     }
