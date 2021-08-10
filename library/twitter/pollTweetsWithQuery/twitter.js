@@ -6,7 +6,7 @@ const querystring = require('querystring')
 
 module.exports = class Twitter {
   constructor(twitterBearerToken) {
-    if (!/^[A-Za-z0-9%]{112}$/.test(twitterBearerToken)) {
+    if (!/^[A-Za-z0-9%]+$/.test(twitterBearerToken)) {
       throw new Error('Invalid bearer token')
     }
     this.headers = { Authorization: `Bearer ${twitterBearerToken}` }
