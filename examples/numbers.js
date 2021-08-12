@@ -4,7 +4,7 @@
 // Create a new DynamoDB table to store numbers. Use the field
 // "id" as the partition key for this table.
 //
-numbers = sff.aws.DynamoDB({ pkey: 'id' })
+numbers = seff.aws.DynamoDB({ pkey: 'id' })
 
 // Create a data flow named "go". This flow counts the number
 // of times it was invoked and stores these numbers into the
@@ -13,15 +13,15 @@ numbers = sff.aws.DynamoDB({ pkey: 'id' })
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/numbers.js go
+//   ./seff run examples/numbers.js go
 //
-go = sff
+go = seff
 
   // Use a library function to count invocations. Library
   // functions have state too.
   //
   .then(
-    sff.lib.std.countInvocations,
+    seff.lib.std.countInvocations,
   )
 
   // Add an "id" so we can store the number in our table.

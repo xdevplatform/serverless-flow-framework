@@ -40,7 +40,7 @@ async function createJavascriptBuffer(
 ): Promise<Buffer> {
 
   const random = crypto.randomBytes(8).toString('hex')
-  const folder = new Folder(`sff-${random}`)
+  const folder = new Folder(`seff-${random}`)
 
   try {
     console.log('Copying JavaScript files')

@@ -4,7 +4,7 @@
 // Create a new DynamoDB table to store message objects.
 // Use the field "id" as the partition key for this table.
 //
-messages = sff.aws.DynamoDB({ pkey: 'id' })
+messages = seff.aws.DynamoDB({ pkey: 'id' })
 
 // Create a data flow named "go". This flow generates
 // random messages, transforms them and stores them in
@@ -13,9 +13,9 @@ messages = sff.aws.DynamoDB({ pkey: 'id' })
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/dynamodb.js go
+//   ./seff run examples/dynamodb.js go
 //
-go = sff
+go = seff
 
   // Generate an array of message objects, each with a numeric
   // "id" and a string "text". The length of the array is

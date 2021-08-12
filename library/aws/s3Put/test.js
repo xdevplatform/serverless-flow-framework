@@ -1,7 +1,7 @@
 // Copyright 2021 Twitter, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-process.env.S3_BUCKET_NAME = `sff-test-${process.env.USER || 'anonymous'}`
+process.env.S3_BUCKET_NAME = `seff-test-${process.env.USER || 'anonymous'}`
 process.env.DYNAMODB_PARTITION_KEY = 'ID'
 
 const { handler } = require('./index')

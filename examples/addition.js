@@ -7,9 +7,9 @@
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/additions.js add
+//   ./seff run examples/additions.js add
 //
-add = sff
+add = seff
 
   // This is the first function in this data flow. It
   // generates two random numbers between 0 and 10.

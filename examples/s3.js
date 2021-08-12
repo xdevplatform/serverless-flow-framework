@@ -4,8 +4,8 @@
 // Create a new S3 bucket to store objects. S3 bucket names
 // are global so we need to generate one here.
 //
-bucket = sff.aws.S3Bucket({
-  name: `sff-${sff.env.USER || 'anonymous'}-examples-s3`,
+bucket = seff.aws.S3Bucket({
+  name: `seff-${seff.env.USER || 'anonymous'}-examples-s3`,
 })
 
 // Create a data flow named "go". This flow generates
@@ -15,9 +15,9 @@ bucket = sff.aws.S3Bucket({
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/s3.js go
+//   ./seff run examples/s3.js go
 //
-go = sff
+go = seff
 
   // Generate an array of message objects, each with a numeric
   // "id" and a string "text". The length of the array is

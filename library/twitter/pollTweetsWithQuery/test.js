@@ -22,7 +22,7 @@ async function testOnce(event, state) {
 
 async function test() {
   console.log(`${CGRAY}Starting test${CLEAR}`)
-  const event = { name: 'sff', query: 'serverless flow framework', fields: ['id', 'text'] }
+  const event = { name: 'serverless', query: 'serverless', fields: ['id', 'text'] }
   console.log('event:', event)
 
   let state = {}

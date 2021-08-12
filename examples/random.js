@@ -8,15 +8,15 @@
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/random.js random
+//   ./seff run examples/random.js random
 //
-random = sff
+random = seff
 
   // Use a library function to generate a random number
   // between 0 and 1.
   //
   .then(
-    sff.lib.std.generateRandomNumber,
+    seff.lib.std.generateRandomNumber,
   )
 
   // Multiply by something.

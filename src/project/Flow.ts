@@ -93,16 +93,16 @@ export class Flow implements Collectible {
 
     const dependencies: Record<string, Resource> = {}
     const functions = this.functions.map(fn => {
-      const name = `sff-${this.projectName}-${this.name}-${fn.name}`
+      const name = `seff-${this.projectName}-${this.name}-${fn.name}`
       if (fn instanceof DepFunc) {
         dependencies[name] = fn.dep.resolve()
       }
       return new Func(fn.type, name, fn.body, fn.env.unshift({
-        SFF_FULL_NAME: name,
-        SFF_FIRST_NAME: fn.name,
-        SFF_FLOW_NAME: this.name,
-        SFF_PROJECT_NAME: this.projectName,
-        SFF_STATE_TABLE_NAME: `${config.STATE_TABLE_PREFIX}-${this.projectName}`
+        SEFF_FULL_NAME: name,
+        SEFF_FIRST_NAME: fn.name,
+        SEFF_FLOW_NAME: this.name,
+        SEFF_PROJECT_NAME: this.projectName,
+        SEFF_STATE_TABLE_NAME: `${config.STATE_TABLE_PREFIX}-${this.projectName}`
       }))
     })
 

@@ -4,7 +4,7 @@
 
 # Introduction
 
-The Serverless Flow Framework (SFF) offers a simple way to process real time data
+The Serverless Flow Framework (SeFF) offers a simple way to process real time data
 by stringing together functions to generate, transform and store objects.
 As the name suggests, the framework leverages modern serverless runtimes,
 queues and databases to eliminate the complexity traditionally involved with
@@ -22,7 +22,7 @@ processing data at scale.
 
 ## Installation
 
-SFF is freely available under the Apache 2.0 license.
+SeFF is freely available under the Apache 2.0 license.
 
 1. Clone the repository from GitHub:
 
@@ -64,24 +64,24 @@ that prints the famous greeting to the log.
 Run this command to deploy the project:
 
 ```
-$ ./sff deploy examples/hello.js
+$ ./seff deploy examples/hello.js
 ```
 
 The project defines a single flow named `hello`. It is configured for
 manual invocation and can be run using the following command:
 
 ```
-$ ./sff run examples/hello.js hello
+$ ./seff run examples/hello.js hello
 ```
 
 By now you should have a serverless function by the name
-`sff-hello-hello-helloWorld`. Check out the logs for this function to
+`seff-hello-hello-helloWorld`. Check out the logs for this function to
 view the greeting.
 
 Finally, remove the cloud resources you deployed with the command:
 
 ```
-$ ./sff destroy examples/hello.js
+$ ./seff destroy examples/hello.js
 ```
 
 ## Your first data flow
@@ -93,14 +93,14 @@ prints the sum to the log.
 Use the following command to deploy the project:
 
 ```
-$ ./sff deploy examples/addition.js
+$ ./seff deploy examples/addition.js
 ```
 
 The project defines a single flow named `add`. It is configured for manual
 invocation and can be run using the following command:
 
 ```
-$ ./sff run examples/addition.js add
+$ ./seff run examples/addition.js add
 ```
 
 This will trigger an execution chain starting with the first function that
@@ -110,11 +110,11 @@ course, in a real world example we wouldn't use separate functions for such
 granular computations.
 
 The printed numbers can be viewed in log for the serverless function
-`sff-addition-add-printNumber`. If you are using AWS, check your
+`seff-addition-add-printNumber`. If you are using AWS, check your
 [CloudWatch logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
 under the stream for the Lambda function with this name.
 
-At this point you may want to look at the file `sff.state.json` which
+At this point you may want to look at the file `seff.state.json` which
 holds the state of your project. **DO NOT DELETE THIS FILE**, as the
 framework will lose track of the resources it deployed to the cloud
 will not be able to update or destroy your project.
@@ -123,7 +123,7 @@ The state file and (almost) all resources deployed to the cloud can be
 removed by running
 
 ```
-$ ./sff destroy examples/addition.js
+$ ./seff destroy examples/addition.js
 ```
 
 The only resources not removed by this command are cloud logs, the
@@ -138,29 +138,29 @@ to shorten your code and speed up the building of new projects.
 
 > **WHILE IN ALPHA** library functions are not publically available yet. You
 > will need to set up an S3 bucket for library functions and configure the
-> environment variable `SFF_FUNCTION_LIBRARY_BASEURL` to point to the
+> environment variable `SEFF_FUNCTION_LIBRARY_BASEURL` to point to the
 > bucket using a URL in the form `s3://<bucket>`. Run the following commands
 > to deploy the library functions to your bucket:
 >
 > ```
-> $ ./sff upload -j library/aws/dynamodbWrite
-> $ ./sff upload -j library/aws/rdsInsert
-> $ ./sff upload -j library/aws/s3Put
-> $ ./sff upload -c -j library/std/countInvocations
-> $ ./sff upload -c -j library/std/generateRandomNumber
-> $ ./sff upload -c -j library/twitter/pollTweetsWithQuery
+> $ ./seff upload -j library/aws/dynamodbWrite
+> $ ./seff upload -j library/aws/rdsInsert
+> $ ./seff upload -j library/aws/s3Put
+> $ ./seff upload -c -j library/std/countInvocations
+> $ ./seff upload -c -j library/std/generateRandomNumber
+> $ ./seff upload -c -j library/twitter/pollTweetsWithQuery
 > ```
 
 Deploy the project using
 
 ```
-$ ./sff deploy examples/random.js
+$ ./seff deploy examples/random.js
 ```
 
 and run using
 
 ```
-$ ./sff run examples/random.js random
+$ ./seff run examples/random.js random
 ```
 
 This should print out a single number between 0 and 100 to the log. Do not
@@ -174,11 +174,11 @@ the multiplier in the second fucntion `multiplyNumber` to a different number.
 Deploy again using the same command used for the initial deployment:
 
 ```
-$ ./sff deploy examples/random.js
+$ ./seff deploy examples/random.js
 ```
 
-You will notice that only the changes were redeployed. SFF tracks the
-state of your project in the cloud (remember `sff.state.json`?). This
+You will notice that only the changes were redeployed. SeFF tracks the
+state of your project in the cloud (remember `seff.state.json`?). This
 allows the framework to detect changes you make to your code and only deploy
 the differences to the cloud.
 
@@ -188,12 +188,12 @@ its services and scale as your development environment.*
 We wrap up by deleting our state and cloud resources:
 
 ```
-$ ./sff destroy examples/random.js
+$ ./seff destroy examples/random.js
 ```
 
 ## Persisting data
 
-SFF makes it easy to persist data. The
+SeFF makes it easy to persist data. The
 [dynamodb.js](/examples/dynamodb.js) project generates random message
 objects, runs a simple transformation to add a timestamp to each message
 and stores the objects in a database table.

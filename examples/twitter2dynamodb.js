@@ -3,7 +3,7 @@
 
 // Create a new DynamoDB table to store Tweets by id.
 //
-tweets = sff.aws.DynamoDB({ pkey: 'id' })
+tweets = seff.aws.DynamoDB({ pkey: 'id' })
 
 // Create a data flow named "go". This flow loads Tweets
 // from the Twitter API and stores them in DynamoDB. The
@@ -21,9 +21,9 @@ tweets = sff.aws.DynamoDB({ pkey: 'id' })
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/twitter2dynamodb.js go
+//   ./seff run examples/twitter2dynamodb.js go
 //
-go = sff
+go = seff
 
   // This function tells the Twitter poller function which
   // query to run. It emits the following info:
@@ -50,8 +50,8 @@ go = sff
   // can be obtained as explained above.
   //
   .then(
-    sff.lib.twitter.pollTweetsWithQuery,
-    { TWITTER_BEARER: sff.env.TWITTER_BEARER }
+    seff.lib.twitter.pollTweetsWithQuery,
+    { TWITTER_BEARER: seff.env.TWITTER_BEARER }
   )
 
   // Store in the Tweets table.

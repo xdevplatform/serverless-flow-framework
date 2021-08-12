@@ -11,11 +11,11 @@ type EventHandler = (event: any) => any
 type StatefulEventHandler = (event: any, state: any) => Promise<any>
 
 export function stateWrapper(func: StatefulEventHandler): EventHandler {
-  if (!process.env.SFF_STATE_TABLE_NAME) {
-    throw new Error('Missing environment variable: SFF_STATE_TABLE_NAME')
+  if (!process.env.SEFF_STATE_TABLE_NAME) {
+    throw new Error('Missing environment variable: SEFF_STATE_TABLE_NAME')
   }
-  if (!process.env.SFF_FULL_NAME) {
-    throw new Error('Missing environment variable: SFF_FULL_NAME')
+  if (!process.env.SEFF_FULL_NAME) {
+    throw new Error('Missing environment variable: SEFF_FULL_NAME')
   }
 
   const AWS = require('aws-sdk')
@@ -56,9 +56,9 @@ export function stateWrapper(func: StatefulEventHandler): EventHandler {
 
   function mkitem(state?: any): any {
     return {
-      TableName: process.env.SFF_STATE_TABLE_NAME,
+      TableName: process.env.SEFF_STATE_TABLE_NAME,
       [state ? 'Item' : 'Key']: {
-        functionName: { S: process.env.SFF_FULL_NAME },
+        functionName: { S: process.env.SEFF_FULL_NAME },
         ...(state ? { state: { S: JSON.stringify(state.next) } } : {}),
       },
     }

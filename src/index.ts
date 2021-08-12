@@ -23,17 +23,17 @@ colorizeConsole({
 })
 
 const DEFAULT_CONFIG: Config = {
-  AWS_LAMBDA_ROLE_NAME: 'sff-lambda-role',
+  AWS_LAMBDA_ROLE_NAME: 'seff-lambda-role',
   CLOUD_PROVIDER: 'aws',
-  CONFIG_FILE: 'sff.config.json',
-  FUNCTION_LIBRARY_BASEURL: 's3://sff-function-library/',
+  CONFIG_FILE: 'seff.config.json',
+  FUNCTION_LIBRARY_BASEURL: 's3://seff-function-library/',
   JAVASCRIPT_SKIP_FILES: 'dist,node_modules',
   SERVERLESS_FUNCTION_HANDLER: 'index.handler',
   SERVERLESS_FUNCTION_MEMORY: '256',
   SERVERLESS_FUNCTION_RUNTIME: 'nodejs14.x',
   SERVERLESS_FUNCTION_TIMEOUT_SECONDS: '3',
-  STATE_FILE: 'sff.state.json',
-  STATE_TABLE_PREFIX: 'sff-state',
+  STATE_FILE: 'seff.state.json',
+  STATE_TABLE_PREFIX: 'seff-state',
 }
 
 async function main() {

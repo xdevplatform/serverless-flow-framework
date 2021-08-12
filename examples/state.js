@@ -8,15 +8,15 @@
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/state.js go
+//   ./seff run examples/state.js go
 //
-go = sff
+go = seff
 
   // Use a library function to generate a random number
   // between 0 and 1.
   //
   .then(
-    sff.lib.std.generateRandomNumber,
+    seff.lib.std.generateRandomNumber,
   )
 
   // Print the random number. This function uses the

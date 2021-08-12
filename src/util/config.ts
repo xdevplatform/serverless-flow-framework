@@ -10,7 +10,7 @@ export const config: Config = {}
 export async function initConfig(defaultConfig: Config, optionsConfig: Config) {
   const filename =
     optionsConfig.CONFIG_FILE ||
-    process.env.SFF_CONFIG_FILE ||
+    process.env.SEFF_CONFIG_FILE ||
     defaultConfig.CONFIG_FILE
   const file = new File(filename, 'config')
   const fileConfig = (await file.loadJSON({ undefinedIfNotExist: true })) || {}
@@ -18,7 +18,7 @@ export async function initConfig(defaultConfig: Config, optionsConfig: Config) {
   for (const field in defaultConfig) {
     config[field] =
       optionsConfig[field] ||
-      process.env[`SFF_${field}`] ||
+      process.env[`SEFF_${field}`] ||
       fileConfig[field] ||
       defaultConfig[field]
   }

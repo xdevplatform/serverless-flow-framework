@@ -85,7 +85,7 @@ function runCodeInVM(
 ): Object {
   const flow = new Flow(projectName, flowCollector)
   const context = {
-    sff: {
+    seff: {
       aws: new Proxy({}, {
         get: (target: any, name: string) => {
           const clas = ResourceProxy.getClassByName(name)
@@ -105,7 +105,7 @@ function runCodeInVM(
 }
 
 function applyNamesFromRuntimeContext(context: Record<string, any>): void {
-  const { sff, ...project } = context
+  const { seff, ...project } = context
   for (const [name, value] of Object.entries(project)) {
     if (value instanceof Flow) {
       value.setName(name)

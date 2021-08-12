@@ -6,7 +6,7 @@
 // will trigger provisioning of an RDS Aurora PostgreSQL
 // database along with the requires VPC and other resources.
 //
-records = sff.aws.RDS(`
+records = seff.aws.RDS(`
   id varchar(16) primary key
   text varchar(32)
   created_at varchar(64)
@@ -18,9 +18,9 @@ records = sff.aws.RDS(`
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/rds.js go
+//   ./seff run examples/rds.js go
 //
-go = sff
+go = seff
 
   // Generate an record each with an "id", "text" and creation
   // time.

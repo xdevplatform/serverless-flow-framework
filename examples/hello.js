@@ -9,9 +9,9 @@
 // You can run this flow from the root folder (..) by
 // running the command:
 //
-//   ./sff run examples/hello.js hello
+//   ./seff run examples/hello.js hello
 //
-hello = sff
+hello = seff
   .do(
     function helloWorld() {
       console.log('Hello, world!')
