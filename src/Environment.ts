@@ -55,10 +55,20 @@ function validateEnv(maybe: any): Env {
   }
   const env: Env = {}
   for (const [key, value] of Object.entries(maybe)) {
-    if (typeof value !== 'string' && typeof value !== 'number') {
-      throw new Error(`Invalid environment value for ${key}: ${value}`)
+    switch (typeof value) {
+      case 'boolean':
+      case 'number':
+        env[key] = String(value)
+        break
+      case 'object':
+        env[key] = JSON.stringify(value)
+        break
+      case 'string':
+        env[key] = value
+        break
+      default:
+        throw new Error(`Invalid environment value for ${key}: ${value}`)
     }
-    env[key] = String(value)
   }
   return env
 }
