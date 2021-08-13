@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import AWS from 'aws-sdk'
+import crypto from 'crypto'
 import { zipOne } from '../util/zip'
+import { hashStr } from '../util/hash'
 import { config } from '../util/config'
 import { Environment } from '../Environment'
 import { stateWrapper } from './stateWrapper'
+import { getClient, parseS3URL } from './aws'
 import { Resource } from '../resource/Resource'
-import { hashObj, hashStr } from '../util/hash'
-import { createSimplePolicy, getClient, getOrCreateServiceRole, parseS3URL } from './aws'
 
 type Functioncode = { ZipFile: Buffer } | { S3Bucket: string, S3Key: string }
 
@@ -191,3 +192,83 @@ export class AWSLambdaFunctionResource extends Resource {
 }
 
 Resource.registerResourceClass(AWSLambdaFunctionResource)
+
+interface AWSPolicyStatement {
+  action: string[]
+  effect: string
+  resource: string
+}
+
+function createPolicy(statements: AWSPolicyStatement | AWSPolicyStatement[]) {
+  const sts = Array.isArray(statements) ? statements : [statements]
+  return {
+    Version: '2012-10-17',
+    Statement: sts.map((st) => ({
+      Effect: st.effect,
+      Action: st.action,
+      Resource: st.resource,
+    })),
+  }
+}
+
+function createSimplePolicy(resource: string, action: string[], effect = 'Allow') {
+  return createPolicy({ action, effect, resource })
+}
+
+async function getOrCreateServiceRole(
+  roleName: string,
+  service: string,
+  ...policies: (string | Record<string, any>)[]
+) {
+  const iam = getClient('IAM')
+
+  try {
+    const res = await getClient('IAM').getRole({ RoleName: roleName }).promise()
+    return res.Role
+  } catch (e) {
+    if (e.code !== 'NoSuchEntity') {
+      throw e
+    }
+    console.info(`Creating IAM role for service ${service}: ${roleName}`)
+    const res = await getClient('IAM').createRole({
+      RoleName: roleName,
+      AssumeRolePolicyDocument: JSON.stringify({
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: {
+              Service: service,
+            },
+            Action: 'sts:AssumeRole',
+          },
+        ],
+      }),
+    }).promise()
+
+    const policiesArray = policies === undefined
+      ? []
+      : Array.isArray(policies) ? policies : [policies]
+
+    for (const policy of policiesArray) {
+      if (typeof policy === 'string') {
+        await getClient('IAM').attachRolePolicy({
+          RoleName: roleName,
+          PolicyArn: policy,
+        }).promise()
+      } else {
+        await getClient('IAM').putRolePolicy({
+          PolicyDocument: JSON.stringify(policy),
+          PolicyName: `policy_${roleName}_${crypto.randomBytes(4).toString('hex')}`,
+          RoleName: roleName,
+        })
+        .promise()
+      }
+    }
+
+    // It takes a while for a service role to become assumable
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+
+    return res.Role
+  }
+}
