@@ -57,8 +57,15 @@ async function createJavascriptBuffer(
       console.log('Running npm install')
       await folder.exec('npm install')
 
-      console.log('Running npm build')
-      await folder.exec('npm run build')
+      const script = `
+        const package = require(\'./package.json\');
+        process.stdout.write(package.scripts && package.scripts.build ? package.scripts.build : '')
+      `
+      const build = (await folder.exec(`node -e "${script}"`)).stdout
+      if (build) {
+        console.log('Running npm build')
+        await folder.exec('npm run build')
+      }
     }
 
     if (options.hasOwnProperty('cross')) {
@@ -81,8 +88,12 @@ async function createJavascriptBuffer(
         console.log(code)
       })().catch(console.error)`
 
-      const code = 'const main = require(\'./main\');\n' +
-        (await folder.exec(`node -e "${script}"`)).stdout
+      const res = await folder.exec(`node -e "${script}"`)
+      if (res.stderr) {
+        console.error(res.stderr)
+        throw new Error('Error generating code')
+      }
+      const code = 'const main = require(\'./main\');\n' + res.stdout
 
       await folder.write('index.js', code)
     }
