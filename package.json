@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc -b",
+    "copyright": "[ `find examples library src  -name \"*.[jt]s\" | wc -l` -eq `find examples library src  -name \"*.[jt]s\" -exec grep \"Copyright 2021 Twitter\" {} \\; | wc -l` ] || echo Error: Missing copyright header",
     "clean": "rimraf dist node_modules package-lock.json",
     "lint": "eslist src --ext .ts,.js",
     "start": "node --unhandled-rejections=strict dist/main.js",

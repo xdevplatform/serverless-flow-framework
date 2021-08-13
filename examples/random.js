@@ -1,4 +1,4 @@
-// Copyright v Twitter, Inc.
+// Copyright 2021 Twitter, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 // Create a data flow named "random". This flow generates
