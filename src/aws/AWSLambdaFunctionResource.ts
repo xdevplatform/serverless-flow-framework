@@ -7,7 +7,6 @@ import { zipOne } from '../util/zip'
 import { hashStr } from '../util/hash'
 import { config } from '../util/config'
 import { Environment } from '../Environment'
-import { stateWrapper } from './stateWrapper'
 import { getClient, parseS3URL } from './aws'
 import { Resource } from '../resource/Resource'
 
@@ -107,13 +106,13 @@ export class AWSLambdaFunctionResource extends Resource {
       Code: code,
       Environment: { Variables: this.env!.get() },
       FunctionName: this.name,
-      Handler: config.SERVERLESS_FUNCTION_HANDLER || 'index.handler',
-      MemorySize: parseInt(config.SERVERLESS_FUNCTION_MEMORY || '256'),
+      Handler: config.SERVERLESS_FUNCTION_HANDLER,
+      MemorySize: parseInt(config.SERVERLESS_FUNCTION_MEMORY),
       Publish: true,
-      Runtime: config.SERVERLESS_FUNCTION_RUNTIME || 'nodejs14.x',
+      Runtime: config.SERVERLESS_FUNCTION_RUNTIME,
       Role: role.Arn,
       Tags: {},
-      Timeout: parseInt(config.SERVERLESS_FUNCTION_TIMEOUT_SECONDS || '3'),
+      Timeout: parseInt(config.SERVERLESS_FUNCTION_TIMEOUT_SECONDS),
     }).promise()
 
     if (!res.FunctionArn) {
@@ -169,16 +168,14 @@ export class AWSLambdaFunctionResource extends Resource {
 
   public static encodeJavascriptFunction(body: string, variable?: string): string {
     const out: string[] = []
+    out.push(handlerWrapper.toString())
     if (2 <= AWSLambdaFunctionResource.getJavaScriptArgumentList(body).length) {
       out.push(stateWrapper.toString())
       out.push(`const body = stateWrapper(${variable || body});`)
     } else {
       out.push(`const body = ${variable || body};`)
     }
-    out.push(`exports.handler = async (event) => {`)
-    out.push(`  const ev = event.responsePayload || event;`)
-    out.push(`  return Array.isArray(ev) ? ev.map(body) : body(ev);`)
-    out.push(`}`)
+    out.push(`exports.handler = handlerWrapper(body)`)
     return out.join('\n')
   }
 
@@ -270,5 +267,107 @@ async function getOrCreateServiceRole(
     await new Promise((resolve) => setTimeout(resolve, 10000))
 
     return res.Role
+  }
+}
+
+interface State {
+  prev: any
+  next?: any
+}
+
+type EventHandler = (event: any) => any
+
+export function handlerWrapper(body: EventHandler): EventHandler {
+  return async (event) => {
+    const events = event.responsePayload || event
+    if (!Array.isArray(events)) {
+      return body(events)
+    }
+    const interval = parseInt(process.env.SEFF_RATE_LIMIT_INTERVAL_MS || '0')
+    const results = []
+    for (let i = 0; i < events.length; i++) {
+      const start = Date.now()
+      console.log(`Processing event ${i + 1} of ${events.length}`)
+      results.push(await body(events[i]))
+      const sleep = start + interval - Date.now()
+      if (i !== events.length - 1 && 0 < sleep) {
+        console.log(`Sleeping ${sleep} milliseconds before next call`)
+        await new Promise(resolve => setTimeout(resolve, sleep))
+      }
+    }
+  }
+}
+
+type StatefulEventHandler = (event: any, state: any) => Promise<any>
+
+export function stateWrapper(func: StatefulEventHandler): EventHandler {
+  if (!process.env.SEFF_STATE_TABLE_NAME) {
+    throw new Error('Missing environment variable: SEFF_STATE_TABLE_NAME')
+  }
+  if (!process.env.SEFF_FULL_NAME) {
+    throw new Error('Missing environment variable: SEFF_FULL_NAME')
+  }
+
+  const AWS = require('aws-sdk')
+  const dynamodb = new AWS.DynamoDB()
+
+  function obj2str(obj: any): string {
+    const type = typeof obj
+    if (type === 'boolean' || type === 'number') {
+      return String(obj)
+    }
+    if (type === 'string') {
+      return `"${obj.replace(/\"/g, '\\"')}"`
+    }
+    if (obj === null) {
+      return 'null'
+    }
+    if (obj === undefined) {
+      return 'undefined'
+    }
+    if (Array.isArray(obj)) {
+      return `[${obj.map(e => obj2str(e)).join(',')}]`
+    }
+    if (type === 'object') {
+      return `{${
+        Object
+          .keys(obj)
+          .sort()
+          .map(key => `${key}:${obj2str(obj[key])}`)
+          .join(',')
+      }}`
+    }
+    throw new Error(`Cannot stringify: ${obj}`)
+  }
+
+  function objeq(obj1: any, obj2: any): boolean {
+    return obj2str(obj1) === obj2str(obj2)
+  }
+
+  function mkitem(state?: any): any {
+    return {
+      TableName: process.env.SEFF_STATE_TABLE_NAME,
+      [state ? 'Item' : 'Key']: {
+        functionName: { S: process.env.SEFF_FULL_NAME },
+        ...(state ? { state: { S: JSON.stringify(state.next) } } : {}),
+      },
+    }
+  }
+
+  return async function(event: any): Promise<any> {
+    const prev = await dynamodb.getItem(mkitem()).promise()
+    const json = prev.Item && prev.Item.state.S
+    const state: State = { prev: json && JSON.parse(json) }
+
+    const res = await func(event, state)
+
+    if (state.next !== undefined && !objeq(state.next, json && JSON.parse(json))) {
+      await dynamodb.putItem(mkitem(state)).promise()
+    }
+    if (state.next === undefined && json !== undefined) {
+      await dynamodb.deleteItem(mkitem()).promise()
+    }
+
+    return res
   }
 }
