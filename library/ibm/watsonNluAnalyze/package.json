@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "ibm-watson": "^6.1.1"
+  }
+}

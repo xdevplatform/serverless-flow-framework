@@ -8,8 +8,10 @@ const FUNCTIONS = [
   'aws.dynamodbWrite',
   'aws.rdsInsert',
   'aws.s3Put',
+  'ibm.watsonNluAnalyze',
   'std.countInvocations',
   'std.generateRandomNumber',
+  'std.printEvent',
   'twitter.pollTweetsWithQuery',
 ]
 

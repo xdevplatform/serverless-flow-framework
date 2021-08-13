@@ -146,8 +146,10 @@ to shorten your code and speed up the building of new projects.
 > $ ./seff upload -j library/aws/dynamodbWrite
 > $ ./seff upload -j library/aws/rdsInsert
 > $ ./seff upload -j library/aws/s3Put
+> $ ./seff upload -c -j library/ibm/watsonNluAnalyze
 > $ ./seff upload -c -j library/std/countInvocations
 > $ ./seff upload -c -j library/std/generateRandomNumber
+> $ ./seff upload -c -j library/std/printEvent
 > $ ./seff upload -c -j library/twitter/pollTweetsWithQuery
 > ```
 
