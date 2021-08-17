@@ -60,7 +60,7 @@ export class AWSLambdaFunctionResource extends Resource {
 
     const code = await this.getCode()
 
-    const role = await getOrCreateServiceRole(
+    const roleArn = config.AWS_LAMBDA_ROLE_ARN || await getOrCreateServiceRoleARN(
       config.AWS_LAMBDA_ROLE_NAME,
       'lambda.amazonaws.com',
       createSimplePolicy('arn:aws:dynamodb:*:*:table/*', [
@@ -96,7 +96,7 @@ export class AWSLambdaFunctionResource extends Resource {
         's3:ListAllMyBuckets',
         's3:ListBucket',
         's3:PutObject',
-       ]),
+      ]),
       createSimplePolicy('arn:aws:secretsmanager:*:*:*:*', [
         'secretsmanager:GetSecretValue',
       ]),
@@ -110,7 +110,7 @@ export class AWSLambdaFunctionResource extends Resource {
       MemorySize: parseInt(config.SERVERLESS_FUNCTION_MEMORY),
       Publish: true,
       Runtime: config.SERVERLESS_FUNCTION_RUNTIME,
-      Role: role.Arn,
+      Role: roleArn,
       Tags: {},
       Timeout: parseInt(config.SERVERLESS_FUNCTION_TIMEOUT_SECONDS),
     }).promise()
@@ -212,16 +212,16 @@ function createSimplePolicy(resource: string, action: string[], effect = 'Allow'
   return createPolicy({ action, effect, resource })
 }
 
-async function getOrCreateServiceRole(
+async function getOrCreateServiceRoleARN(
   roleName: string,
   service: string,
   ...policies: (string | Record<string, any>)[]
-) {
+): Promise<string> {
   const iam = getClient('IAM')
 
   try {
     const res = await getClient('IAM').getRole({ RoleName: roleName }).promise()
-    return res.Role
+    return res.Role.Arn
   } catch (e) {
     if (e.code !== 'NoSuchEntity') {
       throw e
@@ -266,7 +266,7 @@ async function getOrCreateServiceRole(
     // It takes a while for a service role to become assumable
     await new Promise((resolve) => setTimeout(resolve, 10000))
 
-    return res.Role
+    return res.Role.Arn
   }
 }
 

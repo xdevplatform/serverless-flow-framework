@@ -23,6 +23,7 @@ colorizeConsole({
 })
 
 const DEFAULT_CONFIG: Config = {
+  AWS_LAMBDA_ROLE_ARN: '',
   AWS_LAMBDA_ROLE_NAME: 'seff-lambda-role',
   CLOUD_PROVIDER: 'aws',
   CONFIG_FILE: 'seff.config.json',
