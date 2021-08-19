@@ -32,6 +32,10 @@ export class Project {
     return functionName
   }
 
+  public get name(): string | undefined {
+    return this.graph.name
+  }
+
   // Static ////////////////////////////////////////////////
 
   private static globalResourceCreator?: GlobalResourceCreator

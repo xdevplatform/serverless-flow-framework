@@ -33,7 +33,7 @@ const DEFAULT_CONFIG: Config = {
   SERVERLESS_FUNCTION_MEMORY: '256',
   SERVERLESS_FUNCTION_RUNTIME: 'nodejs14.x',
   SERVERLESS_FUNCTION_TIMEOUT_SECONDS: '60',
-  STATE_FILE: 'seff.state.json',
+  STATE_FILE_POSTFIX: '.state.json',
   STATE_TABLE_PREFIX: 'seff-state',
 }
 
@@ -41,7 +41,11 @@ async function main() {
   const claParser = new CommandLineArgumentsParser()
     .addOption('config', 'c', 'Configuration file')
     // .addOption('provider', 'p', 'Cloud provider: only aws for now')
-    .addOption('state', 's', `State file name (default ${DEFAULT_CONFIG.STATE_FILE_NAME})`)
+    .addOption(
+      'state',
+      's',
+      `State file name (default <project>${DEFAULT_CONFIG.STATE_FILE_POSTFIX})`,
+    )
     .addOption(
       'table',
       't',
@@ -106,7 +110,7 @@ async function main() {
   const index = claParser.getCommand(cla.commandName).args.indexOf('project')
   if (0 <= index) {
     project = await loadProject(cla.args[index])
-    stateFile = new File(cla.globalOptions.state || config.STATE_FILE, 'state')
+    stateFile = new File(config.STATE_FILE || project.name + config.STATE_FILE_POSTFIX, 'state')
     const stateData = await stateFile.loadJSON({ undefinedIfNotExist: true })
     stateGraph = ResourceGraph.deserialize(stateData || [])
   }

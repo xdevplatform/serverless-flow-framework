@@ -114,7 +114,7 @@ The printed numbers can be viewed in log for the serverless function
 [CloudWatch logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
 under the stream for the Lambda function with this name.
 
-At this point you may want to look at the file `seff.state.json` which
+At this point you may want to look at the file `addition.state.json` which
 holds the state of your project. **DO NOT DELETE THIS FILE**, as the
 framework will lose track of the resources it deployed to the cloud
 will not be able to update or destroy your project.
@@ -180,7 +180,7 @@ $ ./seff deploy examples/random.js
 ```
 
 You will notice that only the changes were redeployed. SeFF tracks the
-state of your project in the cloud (remember `seff.state.json`?). This
+state of your project in the cloud (see `random.state.json`). This
 allows the framework to detect changes you make to your code and only deploy
 the differences to the cloud.
 
