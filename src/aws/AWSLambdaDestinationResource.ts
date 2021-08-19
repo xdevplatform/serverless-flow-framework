@@ -32,6 +32,7 @@ export class AWSLambdaDestinationResource extends Resource {
   public async create(): Promise<void> {
     console.info('Creating Lambda destination:', this.name)
     await this.setLambdaDestination(this.destination.crn)
+    this.setCRN(this.name)
   }
 
   public async remove(): Promise<void> {
