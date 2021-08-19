@@ -124,7 +124,7 @@ export abstract class Resource {
       deps: Object.fromEntries(Object.entries(this.dependencies).map(
         ([tag, resource]) => [tag, resource.uid]
       )),
-      parent: this._parent,
+      parent: this._parent && this._parent.uid,
     }
   }
 
@@ -221,6 +221,10 @@ export abstract class Resource {
     const resource = new clas(data.name, data.crn, ...data.args)
     if (typeof data.deps !== 'object') {
       console.log(`Invalid serialized dependencies: ${data.deps}`)
+    }
+    if (data.parent) {
+      const uid = Resource.validateUID(data.parent as any)
+      resource.setParent(pool.getResourceByUID(uid))
     }
     for (const [tag, _uid] of Object.entries(data.deps)) {
       Resource.validateTag(tag)
