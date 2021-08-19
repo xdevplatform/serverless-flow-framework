@@ -41,10 +41,9 @@ export class Project {
   private static globalResourceCreator?: GlobalResourceCreator
 
   public static createGlobalResources(graph: ResourceGraph): void {
-    if (!Project.globalResourceCreator) {
-      throw new Error('No global resource creator')
+    if (Project.globalResourceCreator) {
+      Project.globalResourceCreator(graph)
     }
-    Project.globalResourceCreator(graph)
   }
 
   public static registerGlobalResourceCreator(creator: GlobalResourceCreator): void {
