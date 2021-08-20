@@ -60,7 +60,7 @@ export abstract class Resource {
   // only one resource with any given name per resource class.
   //
   public get uid(): string {
-    return `${this.className}:${this.name}`
+    return `uid:${this.className}:${this.name}`
   }
 
   // Add a reference to another resource that this resource
@@ -120,7 +120,7 @@ export abstract class Resource {
     return {
       name: this.name,
       crn: this.crn,
-      args: this.toConstructorArguments(),
+      args: this.toConstructorArguments().map(arg => arg instanceof Resource ? arg.uid : arg),
       deps: Object.fromEntries(Object.entries(this.dependencies).map(
         ([tag, resource]) => [tag, resource.uid]
       )),
@@ -199,7 +199,7 @@ export abstract class Resource {
     if (typeof uid !== 'string') {
       throw new Error(`Invalid resource identifier: ${uid}`)
     }
-    const match = uid.match(/^([a-zA-Z_]\w*):([a-zA-Z_][\w\-]*)$/)
+    const match = uid.match(/^uid:([a-zA-Z_]\w*):([a-zA-Z_][\w\-]*)$/)
     if (!match) {
       throw new Error(`Malformed identifier: ${uid}`)
     }
@@ -218,7 +218,10 @@ export abstract class Resource {
     if (!Array.isArray(data.args)) {
       throw new Error(`Invalid serialized arguments: ${data.args}`)
     }
-    const resource = new clas(data.name, data.crn, ...data.args)
+    const args = data.args.map(
+      (arg: any) => Resource.isUID(arg) ? pool.getResourceByUID(arg) : arg
+    )
+    const resource = new clas(data.name, data.crn, ...args)
     if (typeof data.deps !== 'object') {
       console.log(`Invalid serialized dependencies: ${data.deps}`)
     }
@@ -274,8 +277,12 @@ export abstract class Resource {
     return tag
   }
 
+  public static isUID(maybeUID: string): boolean {
+    return typeof maybeUID === 'string' && /^uid:([a-zA-Z_]\w*):[a-zA-Z_][\w\-]*$/.test(maybeUID)
+  }
+
   public static validateUID(uid: string): string {
-    if (typeof uid !== 'string' || !/^([a-zA-Z_]\w*):[a-zA-Z_][\w\-]*$/.test(uid)) {
+    if (!Resource.isUID(uid)) {
       throw new Error(`Invalid resource UID: ${uid}`)
     }
     return uid
