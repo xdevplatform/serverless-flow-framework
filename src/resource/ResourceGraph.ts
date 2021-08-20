@@ -8,7 +8,7 @@ export interface ResourceGraphChangeEvent {
   resource: Resource
 }
 
-export type ResourceGraphChangeHandler = (event: ResourceGraphChangeEvent) => Promise<void>
+export type ResourceGraphChangeHandler = (event?: ResourceGraphChangeEvent) => Promise<void>
 
 // Resource Graph holds a collection of resources and their
 // parental and dependency relationships. The graph manages
@@ -114,7 +114,7 @@ export class ResourceGraph implements ResourcePool {
     target: ResourceGraph,
     changeHandler?: ResourceGraphChangeHandler,
   ): Promise<void> {
-    const handler = changeHandler || (async (event: ResourceGraphChangeEvent) => {})
+    const handler = changeHandler || (async (event?: ResourceGraphChangeEvent) => {})
     await this.createOrUpdateResources(target, handler)
     await this.removeResourceAndDependents(target, handler)
   }
@@ -123,21 +123,29 @@ export class ResourceGraph implements ResourcePool {
     target: ResourceGraph,
     changeHandler: ResourceGraphChangeHandler,
   ): Promise<void> {
+    let pendingCopies = 0
     for (const res of target.order) {
       const r = this.resources[res.uid]
       if (r && r.crn) {
         res.setCRN(r.crn)
-        if (!res.isEqual(r)) {
+        if (res.isEqual(r)) {
+          pendingCopies++
+        } else {
           console.log(`Updating ${res.className} resource: ${res.name}`)
           await res.update(r)
           await changeHandler({ type: 'update', resource: res })
+          pendingCopies = 0
         }
       }
       else {
         console.log(`Creating ${res.className} resource: ${res.name}`)
         await res.create()
         await changeHandler({ type: 'create', resource: res })
+          pendingCopies = 0
       }
+    }
+    if (pendingCopies) {
+      await changeHandler()
     }
   }
 
