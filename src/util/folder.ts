@@ -83,7 +83,7 @@ export class Folder {
     try {
       await fs.stat(this.path(filename))
       return true
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === 'ENOENT') {
         return false
       }

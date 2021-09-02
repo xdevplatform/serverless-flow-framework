@@ -137,7 +137,7 @@ async function main() {
       const event = cla.commandOptions.event || '{}'
       try {
         JSON.parse(event)
-      } catch (e) {
+      } catch (e: any) {
         throw new e.constructor(`Invalid event object: ${e.message}`)
       }
       provider.invokeAsync(functionName, event)

@@ -222,7 +222,7 @@ async function getOrCreateServiceRoleARN(
   try {
     const res = await getClient('IAM').getRole({ RoleName: roleName }).promise()
     return res.Role.Arn
-  } catch (e) {
+  } catch (e: any) {
     if (e.code !== 'NoSuchEntity') {
       throw e
     }

@@ -161,20 +161,20 @@ export class AWSRdsDatabaseResource extends Resource {
       if (secret) {
         try {
           await this.removeSecret(secret.Name!)
-        } catch (e) {
+        } catch (e: any) {
           console.error(`Error deleting secret for RDS database ${this.name}: ${e.message}`)
         }
       }
       if (cluster) {
         try {
           await this.removeCluster(cluster.DBClusterIdentifier!)
-        } catch (e) {
+        } catch (e: any) {
           console.error(`Error deleting cluster for RDS database ${this.name}: ${e.message}`)
         }
       }
       try {
         await this.removeDBSubnetGroup(group.DBSubnetGroupName)
-      } catch (e) {
+      } catch (e: any) {
         console.error(`Error deleting subnet group for RDS database ${this.name}: ${e.message}`)
       }
       throw e
@@ -258,7 +258,7 @@ async function getSafeClusterStatus(id: string): Promise<ClusterStatus> {
       throw new Error(`Error getting status for RDS cluster: ${id}`)
     }
     return des.DBClusters[0].Status
-  } catch (e) {
+  } catch (e: any) {
     if (e.code === 'DBClusterNotFoundFault') {
       return 'offline'
     }

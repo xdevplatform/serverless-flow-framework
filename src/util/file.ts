@@ -22,7 +22,7 @@ export class File {
       const encoding = options.encoding || null
       const data = await fs.readFile(this.filename, { encoding })
       return data // for try...catch
-    } catch (e) {
+    } catch (e: any) {
       if (options.undefinedIfNotExist && e.code === 'ENOENT') {
         return
       }
@@ -40,7 +40,7 @@ export class File {
     console.info(`Removing ${this.description} file: ${this.filename}`)
     try {
       await fs.unlink(this.filename)
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === 'ENOENT') {
         console.info('File not found:', this.filename)
       } else {
@@ -55,7 +55,7 @@ export class File {
     try {
       const encoding = options.encoding || null
       await fs.writeFile(this.filename, data, { encoding })
-    } catch (e) {
+    } catch (e: any) {
       console.error(`Error storing ${this.description} file: ${e.message}`)
       throw e
     }

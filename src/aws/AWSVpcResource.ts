@@ -66,7 +66,7 @@ export class AWSVpcResource extends Resource {
       for (const subnet of subnets) {
         try {
           await ec2.deleteSubnet({ SubnetId: subnet.SubnetId }).promise()
-        } catch (e) {
+        } catch (e: any) {
           console.error(
             `Error deleting subnet ${subnet.SubnetId} for VPC ${this.name}: ${e.message}`
           )
@@ -74,7 +74,7 @@ export class AWSVpcResource extends Resource {
       }
       try {
         await ec2.deleteVpc({ VpcId: vpc.VpcId }).promise()
-      } catch (e) {
+      } catch (e: any) {
         console.error(`Error deleting VPC ${vpc.VpcId} (${this.name}): ${e.message}`)
       }
       throw e
