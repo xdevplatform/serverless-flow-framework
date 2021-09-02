@@ -4,9 +4,9 @@
 import { Env } from '../Environment'
 import { library } from '../library'
 import { Future } from '../util/Future'
-import { DepFunc } from '../project/Flow'
 import { Resource } from '../resource/Resource'
 import { AWSVpcResource } from './AWSVpcResource'
+import { DependentFunc } from '../project/functions'
 import { AWSResourceProxy } from './AWSResourceProxy'
 import { ResourceGraph } from '../resource/ResourceGraph'
 import { AWSRdsTableResource } from './AWSRdsTableResource'
@@ -34,8 +34,8 @@ export class AWSRdsTableProxy extends AWSResourceProxy {
     return this.setResource(graph.add(table))
   }
 
-  public get insert(): DepFunc {
-    return new DepFunc(
+  public get insert(): DependentFunc {
+    return new DependentFunc(
       library.aws.rdsInsert.derive(
         new Future<Env>(
           () => {

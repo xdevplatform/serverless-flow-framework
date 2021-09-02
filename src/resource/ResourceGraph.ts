@@ -10,6 +10,8 @@ export interface ResourceGraphChangeEvent {
 
 export type ResourceGraphChangeHandler = (event?: ResourceGraphChangeEvent) => Promise<void>
 
+type UIDs = Record<string, boolean>
+
 // Resource Graph holds a collection of resources and their
 // parental and dependency relationships. The graph manages
 // resource lifecycle through a mechanism to transition from
@@ -115,37 +117,95 @@ export class ResourceGraph implements ResourcePool {
     changeHandler?: ResourceGraphChangeHandler,
   ): Promise<void> {
     const handler = changeHandler || (async (event?: ResourceGraphChangeEvent) => {})
-    await this.createOrUpdateResources(target, handler)
+    const updated = await this.createOrUpdateResources(target, handler)
     await this.removeResourceAndDependents(target, handler)
+    await this.handleDependencyChanges(target, handler, updated)
   }
 
   private async createOrUpdateResources(
     target: ResourceGraph,
     changeHandler: ResourceGraphChangeHandler,
-  ): Promise<void> {
-    let pendingCopies = 0
-    for (const res of target.order) {
-      const r = this.resources[res.uid]
-      if (r && r.crn) {
-        res.setCRN(r.crn)
-        if (res.isEqual(r)) {
-          pendingCopies++
+  ): Promise<UIDs> {
+
+    let pendingChanges = 0
+    // type UIDs = Record<string, boolean>
+    const updated: UIDs = {}
+
+    // function dependenciesToUIDs(dependencies: Record<string, Resource>): UIDs {
+    //   return Object.values(dependencies).reduce(
+    //     (acc: UIDs, dep: Resource) => { acc[dep.uid] = true; return acc },
+    //     {} as UIDs,
+    //   )
+    // }
+
+    for (const tgtRes of target.order) {
+      const srcRes = this.resources[tgtRes.uid]
+      if (srcRes && srcRes.crn) {
+        tgtRes.setCRN(srcRes.crn)
+        if (!tgtRes.isEqual(srcRes)) {
+          console.log(`Updating ${tgtRes.className} resource: ${tgtRes.name}`)
+          await tgtRes.update(srcRes)
+          await changeHandler({ type: 'update', resource: tgtRes })
+          pendingChanges = 0
+          updated[tgtRes.uid] = true
         } else {
-          console.log(`Updating ${res.className} resource: ${res.name}`)
-          await res.update(r)
-          await changeHandler({ type: 'update', resource: res })
-          pendingCopies = 0
+          // const fromUIDs = dependenciesToUIDs(r.dependencies)
+          // const toUIDs = dependenciesToUIDs(res.dependencies)
+          // const changeCount =
+          //   Object.keys(toUIDs).filter(uid => updated[uid] || !fromUIDs[uid]).length +
+          //   Object.keys(fromUIDs).filter(uid => !toUIDs[uid]).length
+          // if (changeCount) {
+          //   await res.dependenciesChanged()
+          //   await changeHandler({ type: 'update', resource: res })
+          //   pendingChanges = 0
+          //   updated[res.uid] = true
+          // } else {
+            pendingChanges++
+          // }
         }
       }
       else {
-        console.log(`Creating ${res.className} resource: ${res.name}`)
-        await res.create()
-        await changeHandler({ type: 'create', resource: res })
-          pendingCopies = 0
+        console.log(`Creating ${tgtRes.className} resource: ${tgtRes.name}`)
+        await tgtRes.create()
+        await changeHandler({ type: 'create', resource: tgtRes })
+        pendingChanges = 0
       }
     }
-    if (pendingCopies) {
+
+    if (pendingChanges) {
       await changeHandler()
+    }
+
+    return updated
+  }
+
+  private async handleDependencyChanges(
+    target: ResourceGraph,
+    changeHandler: ResourceGraphChangeHandler,
+    updated: UIDs,
+  ): Promise<void> {
+
+    function dependenciesToUIDs(dependencies: Record<string, Resource>): UIDs {
+      return Object.values(dependencies).reduce(
+        (acc: UIDs, dep: Resource) => { acc[dep.uid] = true; return acc },
+        {} as UIDs,
+      )
+    }
+
+    for (const tgtRes of target.order) {
+      const srcRes = this.resources[tgtRes.uid]
+      if (srcRes && srcRes.crn && tgtRes.isEqual(srcRes)) {
+        const srcUIDs = dependenciesToUIDs(srcRes.dependencies)
+        const tgtUIDs = dependenciesToUIDs(tgtRes.dependencies)
+        const changeCount =
+          Object.keys(tgtUIDs).filter(uid => updated[uid] || !srcUIDs[uid]).length +
+          Object.keys(srcUIDs).filter(uid => !tgtUIDs[uid]).length
+        if (changeCount) {
+          await tgtRes.dependenciesChanged()
+          await changeHandler({ type: 'update', resource: tgtRes })
+          updated[tgtRes.uid] = true
+        }
+      }
     }
   }
 
@@ -197,7 +257,7 @@ export class ResourceGraph implements ResourcePool {
     for (const res of Object.values(removals)) {
       for (const dep of Object.values(res.dependencies)) {
         if (!(dep.uid in removals)) {
-          console.log(`Removing condifuration of ${res.uid} from resource: ${dep.uid}`)
+          console.log(`Removing configuration of ${res.uid} from resource: ${dep.uid}`)
           await res.removeConfigurationFromDependency(dep)
         }
       }

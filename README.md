@@ -227,6 +227,8 @@ function to S3 before attempting to deploy this project, as shown above.
 
 ## More examples
 
+* **[api.js](/examples/api.js)** creates API endpoints.
+
 * **[numbers.js](/examples/numbers.js)** features a library functions that
 persists state between invocations.
 

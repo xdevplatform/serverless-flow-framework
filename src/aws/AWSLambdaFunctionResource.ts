@@ -17,6 +17,7 @@ export class AWSLambdaFunctionResource extends Resource {
   private bodySignature: string
   private env?: Environment
   private envSignature: string
+  private usesLambdaProxy: boolean
 
   constructor(
     name: string,
@@ -24,6 +25,7 @@ export class AWSLambdaFunctionResource extends Resource {
     private readonly type: string,
     bodyOrSignature: string,
     envOrSignature: Environment | string,
+    usesLambdaProxy?: boolean,
   ) {
     super(name, crn)
     if (type !== 'code' && type !== 'url') {
@@ -38,6 +40,7 @@ export class AWSLambdaFunctionResource extends Resource {
       this.env = envOrSignature
       this.envSignature = '' // hashObj(this.env) // XXX resolve at update time?
     }
+    this.usesLambdaProxy = usesLambdaProxy ? true : false
   }
 
   // Persistance ///////////////////////////////////////////
@@ -148,12 +151,16 @@ export class AWSLambdaFunctionResource extends Resource {
     }
   }
 
-  public async getCode(): Promise<Functioncode> {
+  private async getCode(): Promise<Functioncode> {
     if (!this.body || !this.env) {
       throw new Error(`Unable to deploy function without body or env: ${this.name}`)
     }
     if (this.type === 'code') {
-      const code = AWSLambdaFunctionResource.encodeJavascriptFunction(this.body!)
+      const code = AWSLambdaFunctionResource.encodeJavascriptFunction(
+        this.body!,
+        undefined,
+        this.usesLambdaProxy,
+      )
       const buffer = await zipOne('index.js', code)
       return { ZipFile: buffer }
     }
@@ -166,16 +173,24 @@ export class AWSLambdaFunctionResource extends Resource {
 
   // Encode ////////////////////////////////////////////////
 
-  public static encodeJavascriptFunction(body: string, variable?: string): string {
+  public static encodeJavascriptFunction(
+    body: string,
+    variable?: string | undefined,
+    usesLambdaProxy?: boolean,
+  ): string {
     const out: string[] = []
     out.push(handlerWrapper.toString())
+    if (usesLambdaProxy) {
+      out.push(lambdaProxyWrapper.toString())
+    }
     if (2 <= AWSLambdaFunctionResource.getJavaScriptArgumentList(body).length) {
       out.push(stateWrapper.toString())
       out.push(`const body = stateWrapper(${variable || body});`)
     } else {
       out.push(`const body = ${variable || body};`)
     }
-    out.push(`exports.handler = handlerWrapper(body)`)
+    out.push('const handler = handlerWrapper(body)')
+    out.push(`exports.handler = ${usesLambdaProxy ? 'lambdaProxyWrapper(handler)' : 'handler'}`)
     return out.join('\n')
   }
 
@@ -294,6 +309,19 @@ export function handlerWrapper(body: EventHandler): EventHandler {
         console.log(`Sleeping ${sleep} milliseconds before next call`)
         await new Promise(resolve => setTimeout(resolve, sleep))
       }
+    }
+    return results
+  }
+}
+
+function lambdaProxyWrapper(handler: EventHandler): EventHandler {
+  return async (event) => {
+    try {
+      const body = await handler(event)
+      return { statusCode: 200, body }
+    } catch (e) {
+      console.error(e)
+      return { statusCode: 500, body: 'Internal Server Error' }
     }
   }
 }

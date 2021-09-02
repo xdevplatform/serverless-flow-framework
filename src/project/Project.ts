@@ -3,6 +3,7 @@
 
 import vm from 'vm'
 import ospath from 'path'
+import { Api } from './Api'
 import { Flow } from './Flow'
 import { promises as fs } from 'fs'
 import { library } from '../library'
@@ -67,14 +68,16 @@ export async function loadProject(filename: string): Promise<Project> {
 
   const code = await fs.readFile(filename)
 
+  const api = new Api(projectName)
   const flowCollector = new Collector<Flow>('flow')
   const resourceCollector = new Collector<ResourceProxy>()
-  const context = runCodeInVM(projectName, code, flowCollector, resourceCollector)
+  const context = runCodeInVM(projectName, code, api, flowCollector, resourceCollector)
 
   applyNamesFromRuntimeContext(context)
 
   const graph = new ResourceGraph(projectName)
   Project.createGlobalResources(graph)
+  api.createResources(graph)
   createResourcesFromProxies(resourceCollector.objects, graph)
   const functionNames = createResourcesFromFlows(flowCollector.objects, graph)
   return new Project(graph, functionNames)
@@ -83,6 +86,7 @@ export async function loadProject(filename: string): Promise<Project> {
 function runCodeInVM(
   projectName: string,
   code: Buffer,
+  api: Api,
   flowCollector: Collector<Flow>,
   resourceCollector: Collector<ResourceProxy>,
 ): Object {
@@ -100,6 +104,7 @@ function runCodeInVM(
       every: (interval: string) => new IntervalTrigger(projectName, flowCollector, interval),
       lib: library,
       then: (...args: any[]) => flow.then(...args),
+      ...api.getHttpMethodFunctions(),
     },
   }
   vm.createContext(context)

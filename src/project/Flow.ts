@@ -2,20 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Func } from '../Func'
-import { parseURL } from '../util/url'
-import { config } from '../util/config'
-import { Future } from '../util/Future'
 import { Resource } from '../resource/Resource'
 import { ResourceGraph } from '../resource/ResourceGraph'
 import { Collectible, Collector } from '../util/Collector'
+import { DependentFunc, createDeployableFunction } from './functions'
 
 export type FunctionResourceCreator = (functions: Func[], graph: ResourceGraph) => Resource[]
-
-export class DepFunc extends Func {
-  constructor(func: Func, public readonly dep: Future<Resource>) {
-    super(func.type, func.name, func.body, func.env)
-  }
-}
 
 export class Flow implements Collectible {
   private _name?: string
@@ -41,45 +33,8 @@ export class Flow implements Collectible {
   }
 
   public then(...args: any[]): Flow {
-    const envs: Object[] = []
-    while (
-      1 < args.length &&
-      typeof args[args.length - 1] === 'object' &&
-      args[args.length - 1] !== null
-    ) {
-      envs.unshift(args.pop())
-    }
-
-    if (1 === args.length && args[0] instanceof Func) {
-      args[0].env.push(envs)
-      this.functions.push(args[0])
-      return this
-    }
-
-    if (1 === args.length && typeof args[0] === 'function') {
-      this.functions.push(new Func('code', args[0].name, args[0].toString(), envs))
-      return this
-    }
-
-    if (1 === args.length && typeof args[0] === 'object' && args[0] !== null) {
-      envs.unshift(args[0].env)
-      this.functions.push(new Func('url', args[0].name, args[0].url, envs))
-      return this
-    }
-
-    if (1 === args.length && typeof args[0] === 'string') {
-      const url = parseURL(args[0])
-      this.functions.push(new Func('url', url.corename, url.href, envs))
-      return this
-    }
-
-    if (2 === args.length && typeof args[0] === 'string' && typeof args[1] === 'string') {
-      const url = parseURL(args[1])
-      this.functions.push(new Func('url', args[0], url.href, envs))
-      return this
-    }
-
-    throw new Error(`Invalid function: ${args.map(a => `${a}`).join(', ')}`)
+    this.functions.push(Func.create(args))
+    return this
   }
 
   public createResources(graph: ResourceGraph): string | undefined {
@@ -92,28 +47,23 @@ export class Flow implements Collectible {
     }
 
     const dependencies: Record<string, Resource> = {}
-    const functions = this.functions.map(fn => {
-      const name = `seff-${this.projectName}-${this.name}-${fn.name}`
-      if (fn instanceof DepFunc) {
-        dependencies[name] = fn.dep.resolve()
+
+    const funcs = this.functions.map(fn => {
+      const func = createDeployableFunction(fn, this.projectName, this.name)
+      if (fn instanceof DependentFunc) {
+        dependencies[func.name] = fn.dep.resolve()
       }
-      return new Func(fn.type, name, fn.body, fn.env.unshift({
-        SEFF_FULL_NAME: name,
-        SEFF_FIRST_NAME: fn.name,
-        SEFF_FLOW_NAME: this.name,
-        SEFF_PROJECT_NAME: this.projectName,
-        SEFF_STATE_TABLE_NAME: `${config.STATE_TABLE_PREFIX}-${this.projectName}`
-      }))
+      return func
     })
 
-    const resources = Flow.functionResourceCreator(functions, graph)
+    const resources = Flow.functionResourceCreator(funcs, graph)
     for (const res of resources) {
       if (res.name in dependencies) {
         res.addDependency('proxy', dependencies[res.name])
       }
     }
 
-    return functions[0].name
+    return funcs[0].name
   }
 
   // Static ////////////////////////////////////////////////

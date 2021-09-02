@@ -4,8 +4,8 @@
 import { Env } from '../Environment'
 import { library } from '../library'
 import { Future } from '../util/Future'
-import { DepFunc } from '../project/Flow'
 import { Resource } from '../resource/Resource'
+import { DependentFunc } from '../project/functions'
 import { AWSResourceProxy } from './AWSResourceProxy'
 import { ResourceGraph } from '../resource/ResourceGraph'
 import { AWSS3BucketResource } from './AWSS3BucketResource'
@@ -16,8 +16,8 @@ export class AWSS3BucketProxy extends AWSResourceProxy {
     return this.setResource(graph.add(new AWSS3BucketResource(this.name)))
   }
 
-  public get put(): DepFunc {
-    return new DepFunc(
+  public get put(): DependentFunc {
+    return new DependentFunc(
       library.aws.s3Put.derive(
         new Future<Env>(
           () => ({

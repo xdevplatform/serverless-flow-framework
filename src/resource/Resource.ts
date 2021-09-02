@@ -137,6 +137,12 @@ export abstract class Resource {
   //
   public abstract create(): Promise<void>
 
+  // Update the configuration of the corresponding resource based
+  // on changes to resources that this resource dependes on.
+  //
+  public async dependenciesChanged(): Promise<void> {
+  }
+
   // Removal process has been finalized: clear the CRN. This
   // is implemented as separate method because some cloud
   // resources (specifcally those with parent resources) are
@@ -271,7 +277,7 @@ export abstract class Resource {
   }
 
   public static validateTag(tag: string): string {
-    if (typeof tag !== 'string' || !/^[a-zA-Z_]\w*$/.test(tag)) {
+    if (typeof tag !== 'string' || !/^[a-zA-Z_][\w\-]*$/.test(tag)) {
       throw new Error(`Invalid resource depedency tag: ${tag}`)
     }
     return tag

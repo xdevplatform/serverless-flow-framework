@@ -10,14 +10,25 @@ import { config } from '../util/config'
 import { Project } from '../project/Project'
 import { Metadata, Options } from '../types'
 import { Resource } from '../resource/Resource'
+import { Api, ApiEndpoints } from '../project/Api'
 import { ResourceGraph } from '../resource/ResourceGraph'
+import { AWSApiGatewayApiResource } from './AWSApiGatewayApiResource'
 import { AWSDynamoDbTableResource } from './AWSDynamoDbTableResource'
 import { AWSLambdaFunctionResource } from './AWSLambdaFunctionResource'
+import { AWSApiGatewayMethodResource } from './AWSApiGatewayMethodResource'
 import { AWSLambdaDestinationResource } from './AWSLambdaDestinationResource'
+import { AWSApiGatewayResourceResource } from './AWSApiGatewayResourceResource'
+import { AWSApiGatewayDeploymentResource } from './AWSApiGatewayDeploymentResource'
+import { AWSApiGatewatLambdaPermissionResource } from './AWSApiGatewatLambdaPermissionResource'
 
 // Import all AWS proxies and resources to make sure they
 // are all registered and can be used by project code.
 //
+import './AWSApiGatewayApiResource'
+import './AWSApiGatewayDeploymentResource'
+import './AWSApiGatewatLambdaPermissionResource'
+import './AWSApiGatewayMethodResource'
+import './AWSApiGatewayResourceResource'
 import './AWSDynamoDbTableProxy'
 import './AWSDynamoDbTableResource'
 import './AWSLambdaDestinationResource'
@@ -52,6 +63,85 @@ export async function putObject(url: string, buffer: Buffer, metadata?: Metadata
 }
 
 //// Register resource creators ////////////////////////////
+
+Api.registerResourceCreator(
+  (name: string, endpoints: ApiEndpoints, graph: ResourceGraph): Resource[] => {
+
+    if (Object.keys(endpoints).length === 0) {
+      return []
+    }
+
+    const functionResources: AWSLambdaFunctionResource[] = []
+
+    const apiResource = new AWSApiGatewayApiResource(`seff-${name}-api`, undefined)
+    graph.add(apiResource)
+
+    const deploymentResource = new AWSApiGatewayDeploymentResource(
+      `seff-${name}-api-deployment`,
+      undefined,
+      apiResource,
+    )
+    deploymentResource.setParent(apiResource)
+
+    const resourceResources: Resource[] = []
+    for (const [pathPart, methods] of Object.entries(endpoints)) {
+      const resourceResource = new AWSApiGatewayResourceResource(
+        `seff-${name}-api-${pathPart}`,
+        undefined,
+        apiResource,
+        pathPart,
+      )
+      resourceResource.setParent(apiResource)
+      graph.add(resourceResource)
+      resourceResources.push(resourceResource)
+
+      for (const [method, fn] of Object.entries(methods)) {
+
+        const functionResource = new AWSLambdaFunctionResource(
+          fn.name,
+          undefined,
+          fn.type,
+          fn.body,
+          fn.env,
+          true,
+        )
+        graph.add(functionResource)
+        functionResources.push(functionResource)
+
+        const methodResource = new AWSApiGatewayMethodResource(
+          `seff-${name}-api-${pathPart}-${method}`,
+          undefined,
+          method,
+          resourceResource,
+          functionResource,
+        )
+        methodResource.setParent(resourceResource)
+        methodResource.addDependency('resource', resourceResource)
+        methodResource.addDependency('lambda', functionResource)
+        graph.add(methodResource)
+
+        const permissionResource = new AWSApiGatewatLambdaPermissionResource(
+          `seff-${name}-api-${pathPart}-${method}-lambda_permission`,
+          undefined,
+          method,
+          resourceResource,
+          functionResource,
+        )
+        permissionResource.setParent(functionResource)
+        permissionResource.addDependency('resource', resourceResource)
+        permissionResource.addDependency('method', methodResource)
+        permissionResource.addDependency('lambda', functionResource)
+        graph.add(permissionResource)
+
+        deploymentResource.addDependency(methodResource.name, methodResource)
+      }
+    }
+
+    graph.add(deploymentResource)
+
+    return functionResources
+  }
+)
 
 Flow.registerFunctionResourceCreator(
   (functions: Func[], graph: ResourceGraph): Resource[] => {
