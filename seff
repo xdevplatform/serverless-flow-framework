@@ -1,1 +1,20 @@
-node --unhandled-rejections=strict . $*
+find_script_directory() {
+  local dir=''
+  local source="${BASH_SOURCE[0]}"
+
+  # resolve $SOURCE until the file is no longer a symlink
+  while [ -h "$source" ]; do
+
+    dir="$( cd -P "$( dirname "$source" )" >/dev/null 2>&1 && pwd )"
+    source="$(readlink "$source")"
+
+    # if $source was a relative symlink, we need to resolve it relative to the
+    # path where the symlink file was located
+    [[ $source != /* ]] && source="$dir/$source"
+
+  done
+
+  echo "$( cd -P "$( dirname "$source" )" >/dev/null 2>&1 && pwd )"
+}
+
+node --unhandled-rejections=strict $(find_script_directory) $*
