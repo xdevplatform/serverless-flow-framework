@@ -72,9 +72,8 @@ async function main() {
 
   claParser
     .addCommand('upload', 'Create and upload a zip file with function code')
-    .addOption('cross', 'c', 'Treat a JavaScript or TypeScript as cross cloud code', false)
-    .addOption('javascript', 'j', 'Build JavaScript or TypeScript code', false)
-    .addOption('typescript', 't', 'Build JavaScript or TypeScript code', false)
+    .addOption('cross', 'c', 'Treat JavaScript as cross cloud code', false)
+    .addOption('javascript', 'j', 'Build JavaScript code', false)
     .addOption('handler', 'h', 'Serverless function entry point')
     .addOption('memory', 'm', 'Serverless function memory size (MB)')
     .addOption('runtime', 'r', 'Serverless function runtime version')

@@ -119,9 +119,7 @@ export async function upload(
 ): Promise<{ url: string, buffer: Buffer, metadata: Metadata }> {
 
   console.log('Packing code in:', path)
-  const buffer =
-    options.hasOwnProperty('javascript') ||
-    options.hasOwnProperty('typescript')
+  const buffer = options.hasOwnProperty('javascript')
     ? await createJavascriptBuffer(path, options, javascriptEncodeClassName)
     : await createGenericBuffer(path, options)
 
