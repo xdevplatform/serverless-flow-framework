@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Func } from './Func'
+import { joinURL } from './util/url'
 import { config } from './util/config'
 
 const FUNCTIONS = [
@@ -18,8 +19,6 @@ const FUNCTIONS = [
 export const library: Record<string, Record<string, Func>> = {}
 
 export function initLibrary() {
-  const baseurl = config.FUNCTION_LIBRARY_BASEURL +
-    (config.FUNCTION_LIBRARY_BASEURL.endsWith('/') ? '' : '/')
   for (const func of FUNCTIONS) {
     const names = func.split('.')
     if (names.length !== 2) {
@@ -29,6 +28,7 @@ export function initLibrary() {
     if (!library[group]) {
       library[group] = {}
     }
-    library[group][name] = new Func('url', name, `${baseurl}${name}.zip`)
+    const url = joinURL(config.FUNCTION_LIBRARY_BASEURL, name, 'zip')
+    library[group][name] = new Func('url', name, url)
   }
 }

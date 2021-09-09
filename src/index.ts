@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as aws from './aws/aws'
-import { upload } from './upload'
 import { File } from './util/file'
+import { joinURL } from './util/url'
 import { Provider } from './Provider'
 import { initLibrary } from './library'
+import { packFolder } from './util/pack'
 import { colorizeConsole } from './util/console'
+import { humanizedDataSize } from './util/format'
 import { CommandLineArgumentsParser } from './util/cla'
 import { ResourceGraph } from './resource/ResourceGraph'
 import { Project, loadProject } from './project/Project'
@@ -146,9 +148,22 @@ async function main() {
       break
 
     case 'upload': {
-      const clas = provider.getJavascriptEncodeClassName()
-      const { url, buffer, metadata } = await upload(cla.args[0], cla.commandOptions, clas)
-      await provider.putObject(url, buffer, metadata)
+      const path = cla.args[0]
+      console.log('Packing code in:', path)
+      const lang = cla.commandOptions.hasOwnProperty('javascript')
+        ? (cla.commandOptions.hasOwnProperty('cross') ? 'cross-cloud-javascript' : 'javascript')
+        : 'autodetect'
+      const buffer = await packFolder(path, lang, provider.getJavascriptEncodeClassName())
+      console.log(`Uploading ${humanizedDataSize(buffer.length, false)}`)
+      await provider.putObject(
+        cla.commandOptions.url || joinURL(config.FUNCTION_LIBRARY_BASEURL, path, 'zip'),
+        buffer,
+        {
+          handler: cla.commandOptions.handler || config.SERVERLESS_FUNCTION_HANDLER,
+          memory: cla.commandOptions.memory || config.SERVERLESS_FUNCTION_MEMORY,
+          runtime: cla.commandOptions.runtime || config.SERVERLESS_FUNCTION_RUNTIME,
+        }
+      )
     } break
 
     case 'help':

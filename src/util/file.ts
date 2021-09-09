@@ -1,6 +1,7 @@
 // Copyright 2021 Twitter, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import ospath from 'path'
 import { promises as fs } from 'fs'
 
 export interface LoadOptions {
@@ -63,5 +64,17 @@ export class File {
 
   public async storeJSON(object: Object, options: StoreOptions = {}): Promise<void> {
     return this.store(JSON.stringify(object), { encoding: 'utf8', ...options })
+  }
+
+  public static async lookup(filename: string): Promise<string> {
+    try {
+      const st = await fs.stat(filename)
+      return st.isDirectory() ? 'dir' : 'file'
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        return 'none'
+      }
+      throw e
+    }
   }
 }

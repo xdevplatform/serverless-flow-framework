@@ -1,41 +1,18 @@
 // Copyright 2021 Twitter, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import ospath from 'path'
 import crypto from 'crypto'
-import { config } from './util/config'
-import { Folder } from './util/folder'
-import { zipFolder } from './util/zip'
-import { Metadata, Options } from './types'
+import { File } from './file'
+import { config } from './config'
+import { Folder } from './folder'
+import { zipFolder } from './zip'
 
-function floor(n: number, decimals: number = 0) {
-  const scale = Math.pow(10, decimals)
-  return Math.floor(n * scale) / scale
-}
-
-function humanizedDataSize(size: number, short = true) {
-  if (typeof size !== 'number' || size < 0) {
-    throw new Error(`Invalid size: ${size}`)
-  }
-  const sz = Math.floor(size)
-  if (sz === 0) {
-    return short ? '0' : 'zero'
-  }
-  if (sz < 1024) {
-    return short ? `${sz}B` : `${sz} byte${sz === 1 ? '' : 's'}`
-  }
-  if (sz < 1024 * 1024) {
-    return `${floor(sz / 1024, 1)}${short ? '' : ' '}KB`
-  }
-  if (sz < 1024 * 1024 * 1024) {
-    return `${floor(sz / 1024 / 1024, 1)}${short ? '' : ' '}MB`
-  }
-  return `${floor(sz / 1024 / 1024 / 1024, 1)}${short ? '' : ' '}GB`
-}
+type Language = 'cross-cloud-javascript' | 'javascript' | 'raw'
+export type PackLanguage = 'autodetect' | Language
 
 async function createJavascriptBuffer(
   path: string,
-  options: Options,
+  lang: Language,
   javascriptEncodeClassName: string,
 ): Promise<Buffer> {
 
@@ -68,7 +45,7 @@ async function createJavascriptBuffer(
       }
     }
 
-    if (options.hasOwnProperty('cross')) {
+    if (lang === 'cross-cloud-javascript') {
       if (!await folder.contains('main.js')) {
         throw new Error('File not found: main.js')
       }
@@ -79,7 +56,7 @@ async function createJavascriptBuffer(
 
       const script = `(async () => {
         const { ${javascriptEncodeClassName} } =
-          require('${__dirname}/${config.CLOUD_PROVIDER}/${javascriptEncodeClassName}')
+          require('${__dirname}/../${config.CLOUD_PROVIDER}/${javascriptEncodeClassName}')
         const main = require('./main')
         code = await ${javascriptEncodeClassName}.encodeJavascriptFunction(
           main.main.toString(),
@@ -108,32 +85,28 @@ async function createJavascriptBuffer(
   }
 }
 
-async function createGenericBuffer(path: string, options: Options): Promise<Buffer> {
+async function createGenericBuffer(path: string): Promise<Buffer> {
   return zipFolder(path, undefined, undefined, true)
 }
 
-export async function upload(
+export async function packFolder(
   path: string,
-  options: Options,
+  lang: PackLanguage,
   javascriptEncodeClassName: string,
-): Promise<{ url: string, buffer: Buffer, metadata: Metadata }> {
-
-  console.log('Packing code in:', path)
-  const buffer = options.hasOwnProperty('javascript')
-    ? await createJavascriptBuffer(path, options, javascriptEncodeClassName)
-    : await createGenericBuffer(path, options)
-
-  console.log(`Uploading ${humanizedDataSize(buffer.length, false)}`)
-
-  const baseurl = config.FUNCTION_LIBRARY_BASEURL +
-    (config.FUNCTION_LIBRARY_BASEURL.endsWith('/') ? '' : '/')
-  const url = options.url || `${baseurl}${ospath.basename(path)}.zip`
-
-  const metadata = {
-    handler: options.handler || config.SERVERLESS_FUNCTION_HANDLER,
-    memory: options.memory || config.SERVERLESS_FUNCTION_MEMORY,
-    runtime: options.runtime || config.SERVERLESS_FUNCTION_RUNTIME,
+): Promise<Buffer> {
+  if (lang === 'autodetect') {
+    if (await File.lookup(`${path}/index.js`) === 'file') {
+      lang = 'javascript'
+    }
+    else if (await File.lookup(`${path}/main.js`) === 'file') {
+      lang = 'cross-cloud-javascript'
+    }
+    else {
+      lang = 'raw'
+    }
   }
 
-  return { url, buffer, metadata }
+  return lang === 'raw'
+    ? createGenericBuffer(path)
+    : createJavascriptBuffer(path, lang, javascriptEncodeClassName)
 }

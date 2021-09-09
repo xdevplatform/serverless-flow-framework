@@ -4,6 +4,11 @@
 import osurl from 'url'
 import ospath from 'path'
 
+export function joinURL(baseurl: string, filepath: string, extension?: string): string {
+  return baseurl + (baseurl.endsWith('/') ? '' : '/') +
+    ospath.basename(filepath) + (extension ? '.' + extension : '')
+}
+
 export interface URL {
   protocol: string
   hostname: string
